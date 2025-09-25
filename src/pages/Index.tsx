@@ -13,13 +13,12 @@ import { AuthProvider } from "@/hooks/useAuth";
 const AppContent = () => {
   const [activeTab, setActiveTab] = useState("home");
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { user } = useAuth();
 
   const handleVideoUploaded = () => {
-    // Refresh the dashboard or feed if needed
-    if (activeTab === "feed") {
-      window.location.reload();
-    }
+    // Trigger refresh for the video feed
+    setRefreshTrigger(Date.now());
   };
 
   if (!user && activeTab === "home") {
@@ -54,7 +53,7 @@ const AppContent = () => {
       <div className="container mx-auto px-4 py-8">
         {activeTab === "home" && <Dashboard />}
         {activeTab === "dashboard" && <Dashboard />}
-        {activeTab === "feed" && <VideoFeed />}
+        {activeTab === "feed" && <VideoFeed refreshTrigger={refreshTrigger} />}
         {activeTab === "admin" && <AdminPanel />}
         {activeTab === "promote" && (
           <div className="text-center py-16">
