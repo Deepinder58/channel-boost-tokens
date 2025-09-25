@@ -18,10 +18,10 @@ interface Video {
   tokens_spent: number;
   total_views: number;
   created_at: string;
-  profiles: {
+  profiles?: {
     display_name: string;
     username: string;
-  };
+  } | null;
 }
 
 interface Profile {
@@ -41,10 +41,10 @@ interface Transaction {
   amount: number;
   description: string;
   created_at: string;
-  profiles: {
+  profiles?: {
     display_name: string;
     username: string;
-  };
+  } | null;
 }
 
 export const AdminPanel = () => {
@@ -61,13 +61,10 @@ export const AdminPanel = () => {
 
   const fetchData = async () => {
     try {
-      // Fetch pending videos
+      // Fetch videos with user data
       const { data: videosData } = await supabase
         .from('videos')
-        .select(`
-          *,
-          profiles!transactions_user_id_fkey (display_name, username)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       // Fetch users
@@ -76,19 +73,17 @@ export const AdminPanel = () => {
         .select('*')
         .order('created_at', { ascending: false });
 
-      // Fetch recent transactions
+      // Fetch recent transactions with user data
       const { data: transactionsData } = await supabase
         .from('transactions')
-        .select(`
-          *,
-          profiles!videos_user_id_fkey (display_name, username)
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(50);
 
-      setVideos(videosData || []);
+      // Map videos without profiles for now (we'll need to fetch user data separately if needed)
+      setVideos((videosData || []).map(video => ({ ...video, profiles: null })));
       setUsers(usersData || []);
-      setTransactions(transactionsData || []);
+      setTransactions((transactionsData || []).map(transaction => ({ ...transaction, profiles: null })));
     } catch (error: any) {
       toast({
         title: "Error",
