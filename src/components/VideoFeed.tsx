@@ -43,7 +43,7 @@ const VideoFeed = ({ refreshTrigger }: VideoFeedProps) => {
     try {
       setLoading(true);
       
-      // Fetch videos
+      // Fetch videos first
       const { data: videosData, error: videosError } = await supabase
         .from('videos')
         .select('*')
@@ -52,31 +52,46 @@ const VideoFeed = ({ refreshTrigger }: VideoFeedProps) => {
 
       if (videosError) throw videosError;
 
-      // Fetch profiles for the video creators
-      const userIds = videosData?.map(video => video.user_id) || [];
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('user_id, display_name, username')
-        .in('user_id', userIds);
+      if (!videosData || videosData.length === 0) {
+        setVideos([]);
+        setCategories([]);
+        return;
+      }
 
-      if (profilesError) throw profilesError;
+      // Fetch profiles for the video creators
+      const userIds = [...new Set(videosData.map(video => video.user_id))];
+      
+      let profilesData = [];
+      if (userIds.length > 0) {
+        const { data, error: profilesError } = await supabase
+          .from('profiles')
+          .select('user_id, display_name, username')
+          .in('user_id', userIds);
+
+        if (profilesError) {
+          console.error('Profiles fetch error:', profilesError);
+        } else {
+          profilesData = data || [];
+        }
+      }
 
       // Combine videos with their creator profiles
-      const videosWithProfiles = videosData?.map(video => ({
+      const videosWithProfiles = videosData.map(video => ({
         ...video,
-        profiles: profilesData?.find(profile => profile.user_id === video.user_id) || null
-      })) || [];
+        profiles: profilesData.find(profile => profile.user_id === video.user_id) || null
+      }));
 
       setVideos(videosWithProfiles);
       
       // Extract unique categories
       const uniqueCategories = Array.from(
-        new Set(videosData?.map(video => video.category).filter(Boolean))
+        new Set(videosData.map(video => video.category).filter(Boolean))
       ) as string[];
       setCategories(uniqueCategories);
     } catch (error: any) {
+      console.error('VideoFeed fetch error:', error);
       toast({
-        title: "Error",
+        title: "Error", 
         description: "Failed to load videos",
         variant: "destructive",
       });
