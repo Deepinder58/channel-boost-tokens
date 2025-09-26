@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Coins, Play, User, LogOut, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { AuthModal } from "./AuthModal";
+import { ProfileModal } from "./ProfileModal";
 import { supabase } from "@/integrations/supabase/client";
 
 interface NavigationProps {
@@ -14,6 +15,7 @@ interface NavigationProps {
 const Navigation = ({ onTabChange, activeTab }: NavigationProps) => {
   const { user, signOut } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [tokenBalance, setTokenBalance] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -31,7 +33,7 @@ const Navigation = ({ onTabChange, activeTab }: NavigationProps) => {
       .from('profiles')
       .select('token_balance')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
     
     if (data) {
       setTokenBalance(data.token_balance);
@@ -46,7 +48,7 @@ const Navigation = ({ onTabChange, activeTab }: NavigationProps) => {
       .select('role')
       .eq('user_id', user.id)
       .eq('role', 'admin')
-      .single();
+      .maybeSingle();
     
     setIsAdmin(!!data);
   };
@@ -110,7 +112,7 @@ const Navigation = ({ onTabChange, activeTab }: NavigationProps) => {
                     <Badge variant="secondary" className="text-xs">tokens</Badge>
                   </div>
                   
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={() => setShowProfileModal(true)}>
                     <User className="w-4 h-4 mr-2" />
                     Profile
                   </Button>
@@ -132,6 +134,11 @@ const Navigation = ({ onTabChange, activeTab }: NavigationProps) => {
       <AuthModal 
         isOpen={showAuthModal} 
         onClose={() => setShowAuthModal(false)} 
+      />
+
+      <ProfileModal 
+        isOpen={showProfileModal} 
+        onClose={() => setShowProfileModal(false)} 
       />
     </>
   );

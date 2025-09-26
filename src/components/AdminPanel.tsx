@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { CheckCircle, XCircle, Users, Video, DollarSign, Eye } from "lucide-react";
+import { CheckCircle, XCircle, Users, Video, DollarSign, Eye, Trash2 } from "lucide-react";
 
 interface Video {
   id: string;
@@ -107,6 +107,34 @@ export const AdminPanel = () => {
       toast({
         title: "Success",
         description: `Video ${action} successfully`,
+      });
+
+      fetchData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteVideo = async (videoId: string) => {
+    if (!confirm('Are you sure you want to delete this video? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('videos')
+        .delete()
+        .eq('id', videoId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Video deleted successfully",
       });
 
       fetchData();
@@ -230,23 +258,32 @@ export const AdminPanel = () => {
                       <TableCell>{video.tokens_spent}</TableCell>
                       <TableCell>{video.total_views}</TableCell>
                       <TableCell>
-                        {video.status === 'pending' && (
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              onClick={() => handleVideoAction(video.id, 'approved')}
-                            >
-                              <CheckCircle className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleVideoAction(video.id, 'rejected')}
-                            >
-                              <XCircle className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
+                        <div className="flex gap-2">
+                          {video.status === 'pending' && (
+                            <>
+                              <Button
+                                size="sm"
+                                onClick={() => handleVideoAction(video.id, 'approved')}
+                              >
+                                <CheckCircle className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleVideoAction(video.id, 'rejected')}
+                              >
+                                <XCircle className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleDeleteVideo(video.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
