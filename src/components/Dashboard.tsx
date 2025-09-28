@@ -13,6 +13,7 @@ import {
   Award
 } from "lucide-react";
 import TokenBalance from "./TokenBalance";
+import VideoEngagementList from "./VideoEngagementList";
 
 const Dashboard = () => {
   return (
@@ -158,6 +159,9 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Video Engagement List */}
+      <VideoEngagementList />
     </div>
   );
 };
