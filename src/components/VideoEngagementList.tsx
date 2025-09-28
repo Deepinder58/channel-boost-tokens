@@ -9,7 +9,11 @@ import {
   Clock, 
   ExternalLink,
   TrendingUp,
-  Calendar 
+  Calendar,
+  RefreshCw,
+  Heart,
+  MessageCircle,
+  Youtube
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,6 +31,12 @@ interface VideoEngagement {
   category?: string;
   duration?: number;
   earned_tokens?: number;
+  youtube_stats?: {
+    view_count: number;
+    like_count: number;
+    comment_count: number;
+    updated_at: string;
+  };
 }
 
 const VideoEngagementList = () => {
@@ -34,6 +44,7 @@ const VideoEngagementList = () => {
   const { toast } = useToast();
   const [videos, setVideos] = useState<VideoEngagement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshingStats, setRefreshingStats] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -80,6 +91,59 @@ const VideoEngagementList = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchYouTubeStats = async (videoId: string) => {
+    if (!user) return;
+
+    setRefreshingStats(videoId);
+    try {
+      const { data, error } = await supabase.functions.invoke('youtube-stats', {
+        body: { video_id: videoId }
+      });
+
+      if (error) throw error;
+
+      // Update the video in state with new YouTube stats
+      setVideos(prevVideos => 
+        prevVideos.map(video => 
+          video.id === videoId 
+            ? { 
+                ...video, 
+                total_views: data.view_count,
+                youtube_stats: {
+                  view_count: data.view_count,
+                  like_count: data.like_count,
+                  comment_count: data.comment_count,
+                  updated_at: data.updated_at,
+                }
+              }
+            : video
+        )
+      );
+
+      toast({
+        title: "Success",
+        description: "YouTube statistics updated successfully",
+      });
+
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to fetch YouTube statistics",
+        variant: "destructive",
+      });
+    } finally {
+      setRefreshingStats(null);
+    }
+  };
+
+  const refreshAllStats = async () => {
+    for (const video of videos) {
+      await fetchYouTubeStats(video.id);
+      // Add a small delay to avoid hitting rate limits
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
   };
 
@@ -155,10 +219,22 @@ const VideoEngagementList = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <TrendingUp className="w-5 h-5" />
-          Your Video Engagement ({videos.length} videos)
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="w-5 h-5" />
+            Your Video Engagement ({videos.length} videos)
+          </CardTitle>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={refreshAllStats}
+            disabled={refreshingStats !== null}
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className={`w-4 h-4 ${refreshingStats ? 'animate-spin' : ''}`} />
+            Refresh YouTube Stats
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
@@ -181,11 +257,14 @@ const VideoEngagementList = () => {
                     )}
                   </div>
                   
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+                  <div className="grid grid-cols-2 md:grid-cols-6 gap-4 text-sm">
                     <div className="flex items-center gap-1">
                       <Eye className="w-4 h-4 text-muted-foreground" />
                       <span className="text-muted-foreground">Views:</span>
-                      <span className="font-medium">{video.total_views}</span>
+                      <span className="font-medium">{video.total_views.toLocaleString()}</span>
+                      {video.youtube_stats && (
+                        <Youtube className="w-3 h-3 text-red-500" />
+                      )}
                     </div>
                     
                     <div className="flex items-center gap-1">
@@ -206,6 +285,22 @@ const VideoEngagementList = () => {
                       <span className="font-medium">{formatDuration(video.duration)}</span>
                     </div>
                     
+                    {video.youtube_stats && (
+                      <>
+                        <div className="flex items-center gap-1">
+                          <Heart className="w-4 h-4 text-red-500" />
+                          <span className="text-muted-foreground">Likes:</span>
+                          <span className="font-medium">{video.youtube_stats.like_count.toLocaleString()}</span>
+                        </div>
+                        
+                        <div className="flex items-center gap-1">
+                          <MessageCircle className="w-4 h-4 text-blue-500" />
+                          <span className="text-muted-foreground">Comments:</span>
+                          <span className="font-medium">{video.youtube_stats.comment_count.toLocaleString()}</span>
+                        </div>
+                      </>
+                    )}
+                    
                     <div className="flex items-center gap-1">
                       <Calendar className="w-4 h-4 text-muted-foreground" />
                       <span className="text-muted-foreground">Uploaded:</span>
@@ -215,6 +310,16 @@ const VideoEngagementList = () => {
                 </div>
                 
                 <div className="flex items-center gap-2 ml-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => fetchYouTubeStats(video.id)}
+                    disabled={refreshingStats === video.id}
+                    className="flex items-center gap-1"
+                  >
+                    <RefreshCw className={`w-3 h-3 ${refreshingStats === video.id ? 'animate-spin' : ''}`} />
+                    Update Stats
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"
@@ -240,6 +345,11 @@ const VideoEngagementList = () => {
                     Net: {(video.earned_tokens || 0) - video.tokens_spent > 0 ? '+' : ''}
                     {(video.earned_tokens || 0) - video.tokens_spent} tokens
                   </span>
+                  {video.youtube_stats && (
+                    <span className="text-xs text-muted-foreground">
+                      Last updated: {new Date(video.youtube_stats.updated_at).toLocaleTimeString()}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
