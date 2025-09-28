@@ -13,23 +13,24 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Create Supabase client using the anon key for user authentication
   const supabaseClient = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+    Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+    { 
+      global: { 
+        headers: { Authorization: req.headers.get("Authorization")! } 
+      } 
+    }
   );
 
   try {
     console.log("Starting payment creation process");
 
-    // Retrieve authenticated user
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header provided");
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data } = await supabaseClient.auth.getUser(token);
-    const user = data.user;
-    if (!user?.email) throw new Error("User not authenticated or email not available");
+    // Get authenticated user from JWT
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    if (userError || !user?.email) {
+      throw new Error("User not authenticated or email not available");
+    }
 
     console.log("User authenticated:", user.email);
 
@@ -93,7 +94,8 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error("Error in create-payment function:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });
