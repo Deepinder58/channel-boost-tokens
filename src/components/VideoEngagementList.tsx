@@ -175,6 +175,15 @@ const VideoEngagementList = () => {
     });
   };
 
+  const formatNumber = (num: number) => {
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + 'M';
+    } else if (num >= 1000) {
+      return (num / 1000).toFixed(1) + 'k';
+    }
+    return num.toString();
+  };
+
   if (loading) {
     return (
       <Card>
@@ -261,7 +270,7 @@ const VideoEngagementList = () => {
                     <div className="flex items-center gap-1">
                       <Eye className="w-4 h-4 text-muted-foreground" />
                       <span className="text-muted-foreground">Views:</span>
-                      <span className="font-medium">{video.total_views.toLocaleString()}</span>
+                      <span className="font-medium">{formatNumber(video.total_views)}</span>
                       {video.youtube_stats && (
                         <Youtube className="w-3 h-3 text-red-500" />
                       )}
@@ -286,19 +295,11 @@ const VideoEngagementList = () => {
                     </div>
                     
                     {video.youtube_stats && (
-                      <>
-                        <div className="flex items-center gap-1">
-                          <Heart className="w-4 h-4 text-red-500" />
-                          <span className="text-muted-foreground">Likes:</span>
-                          <span className="font-medium">{video.youtube_stats.like_count.toLocaleString()}</span>
-                        </div>
-                        
-                        <div className="flex items-center gap-1">
-                          <MessageCircle className="w-4 h-4 text-blue-500" />
-                          <span className="text-muted-foreground">Comments:</span>
-                          <span className="font-medium">{video.youtube_stats.comment_count.toLocaleString()}</span>
-                        </div>
-                      </>
+                      <div className="flex items-center gap-1">
+                        <MessageCircle className="w-4 h-4 text-blue-500" />
+                        <span className="text-muted-foreground">Comments:</span>
+                        <span className="font-medium">{formatNumber(video.youtube_stats.comment_count)}</span>
+                      </div>
                     )}
                     
                     <div className="flex items-center gap-1">
