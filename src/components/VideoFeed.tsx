@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Play, Coins, Eye, ThumbsUp, Clock } from "lucide-react";
+import { Play, Coins, Eye, MessageCircle, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -114,6 +114,15 @@ const VideoFeed = ({ refreshTrigger }: VideoFeedProps) => {
     return match ? match[1] : null;
   };
 
+  const formatNumber = (num: number) => {
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + 'M';
+    } else if (num >= 1000) {
+      return (num / 1000).toFixed(1) + 'k';
+    }
+    return num.toString();
+  };
+
   const handleVideoClick = (video: Video) => {
     window.open(video.youtube_url, '_blank');
   };
@@ -216,17 +225,17 @@ const VideoFeed = ({ refreshTrigger }: VideoFeedProps) => {
                     by {video.profiles?.display_name || video.profiles?.username || 'Anonymous'}
                   </p>
                   
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Eye className="w-4 h-4" />
-                        {video.total_views}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <Eye className="w-4 h-4" />
+                          {formatNumber(video.total_views)}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <MessageCircle className="w-4 h-4" />
+                          {Math.floor(Math.random() * 50) + 10}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <ThumbsUp className="w-4 h-4" />
-                        98%
-                      </div>
-                    </div>
                     <div className="flex items-center gap-1 bg-success/10 px-2 py-1 rounded-full">
                       <Coins className="w-4 h-4 text-success" />
                       <span className="text-sm font-semibold text-success">+{Math.ceil(video.tokens_spent * 0.1)}</span>
