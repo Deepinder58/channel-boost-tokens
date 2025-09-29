@@ -16,11 +16,7 @@ const Hero = () => {
               <Badge className="bg-gradient-primary text-white border-0 px-4 py-2">
                 🚀 Join 10K+ Creators
               </Badge>
-              <h1 className="text-5xl lg:text-6xl font-bold leading-tight">
-                Grow Your
-                <span className="bg-gradient-primary bg-clip-text text-transparent"> YouTube </span>
-                Channel Together
-              </h1>
+              <h1 className="text-5xl lg:text-6xl font-bold leading-tight">Grow Your Channel Together</h1>
               <p className="text-xl text-muted-foreground max-w-lg">
                 Earn tokens by watching videos, promote your content, and build a thriving creator community.
               </p>
