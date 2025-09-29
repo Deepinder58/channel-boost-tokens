@@ -2,8 +2,25 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Play, Users, Coins, TrendingUp, ArrowRight } from "lucide-react";
 import heroImage from "@/assets/hero-image.jpg";
+import { useAuth } from "@/hooks/useAuth";
+import { AuthModal } from "./AuthModal";
+import { useState } from "react";
 
 const Hero = () => {
+  const { user } = useAuth();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
+  const handleStartPromoting = () => {
+    if (user) {
+      // User is logged in, could navigate to promote tab or dashboard
+      // For now, we'll just close any modal since they're already logged in
+      return;
+    } else {
+      // User not logged in, show auth modal
+      setShowAuthModal(true);
+    }
+  };
+
   return (
     <section className="relative overflow-hidden">
       {/* Background gradient */}
@@ -23,7 +40,11 @@ const Hero = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" className="bg-gradient-primary hover:shadow-glow transition-all duration-300">
+              <Button 
+                size="lg" 
+                className="bg-gradient-primary hover:shadow-glow transition-all duration-300"
+                onClick={handleStartPromoting}
+              >
                 <Play className="w-5 h-5 mr-2 fill-white" />
                 Start Promoting
                 <ArrowRight className="w-4 h-4 ml-2" />
@@ -85,6 +106,11 @@ const Hero = () => {
           </div>
         </div>
       </div>
+
+      <AuthModal 
+        isOpen={showAuthModal} 
+        onClose={() => setShowAuthModal(false)} 
+      />
     </section>
   );
 };

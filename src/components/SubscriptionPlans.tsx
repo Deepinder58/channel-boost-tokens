@@ -2,6 +2,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Check, Star, Zap, Crown } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { AuthModal } from "./AuthModal";
+import { useState } from "react";
 
 const plans = [
   {
@@ -64,6 +67,22 @@ const plans = [
 ];
 
 const SubscriptionPlans = () => {
+  const { user } = useAuth();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
+  const handleUpgradeClick = (planName: string) => {
+    if (planName === 'Free') return; // Free plan is disabled
+    
+    if (user) {
+      // User is logged in, could navigate to payment page
+      // For now, we'll just show they're authenticated
+      console.log(`User ${user.email} wants to upgrade to ${planName}`);
+    } else {
+      // User not logged in, show auth modal
+      setShowAuthModal(true);
+    }
+  };
+
   return (
     <section className="py-16">
       <div className="container mx-auto px-4">
@@ -124,6 +143,7 @@ const SubscriptionPlans = () => {
                     }`}
                     variant={plan.name === 'Free' ? 'outline' : 'default'}
                     disabled={plan.name === 'Free'}
+                    onClick={() => handleUpgradeClick(plan.name)}
                   >
                     {plan.buttonText}
                   </Button>
@@ -141,6 +161,11 @@ const SubscriptionPlans = () => {
           })}
         </div>
       </div>
+
+      <AuthModal 
+        isOpen={showAuthModal} 
+        onClose={() => setShowAuthModal(false)} 
+      />
     </section>
   );
 };
