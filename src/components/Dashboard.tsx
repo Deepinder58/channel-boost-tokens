@@ -14,14 +14,36 @@ import {
 } from "lucide-react";
 import TokenBalance from "./TokenBalance";
 import VideoEngagementList from "./VideoEngagementList";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
 
 const Dashboard = () => {
+  const { user } = useAuth();
+  const [displayName, setDisplayName] = useState<string>("");
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('display_name, username')
+          .eq('user_id', user.id)
+          .single();
+        
+        setDisplayName(profile?.display_name || profile?.username || "User");
+      }
+    };
+
+    fetchUserProfile();
+  }, [user]);
+
   return (
     <div className="space-y-8">
       {/* Welcome Section */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Welcome back, Alex!</h1>
+          <h1 className="text-3xl font-bold">Welcome back, {displayName}!</h1>
           <p className="text-muted-foreground">Here's your creator dashboard overview</p>
         </div>
         <Button className="bg-gradient-primary hover:shadow-glow">
