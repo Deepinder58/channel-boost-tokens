@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      daily_streaks: {
+        Row: {
+          created_at: string
+          current_streak: number
+          id: string
+          last_login_date: string
+          last_reward_claimed: string | null
+          longest_streak: number
+          total_logins: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_login_date: string
+          last_reward_claimed?: string | null
+          longest_streak?: number
+          total_logins?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_login_date?: string
+          last_reward_claimed?: string | null
+          longest_streak?: number
+          total_logins?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -53,6 +89,39 @@ export type Database = {
           user_id?: string
           username?: string | null
           videos_watched?: number
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          referral_code: string
+          referred_id: string
+          referrer_id: string
+          status: string
+          tokens_awarded: number
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          referral_code: string
+          referred_id: string
+          referrer_id: string
+          status?: string
+          tokens_awarded?: number
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          referral_code?: string
+          referred_id?: string
+          referrer_id?: string
+          status?: string
+          tokens_awarded?: number
         }
         Relationships: []
       }
@@ -96,6 +165,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_levels: {
+        Row: {
+          created_at: string
+          experience_points: number
+          id: string
+          level: string
+          level_achieved_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          experience_points?: number
+          id?: string
+          level?: string
+          level_achieved_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          experience_points?: number
+          id?: string
+          level?: string
+          level_achieved_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
@@ -209,6 +308,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_daily_streak: {
+        Args: { _user_id: string }
+        Returns: Json
+      }
+      generate_referral_code: {
+        Args: { _user_id: string }
+        Returns: string
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]

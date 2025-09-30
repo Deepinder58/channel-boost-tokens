@@ -14,6 +14,9 @@ import {
 } from "lucide-react";
 import TokenBalance from "./TokenBalance";
 import VideoEngagementList from "./VideoEngagementList";
+import DailyStreak from "./DailyStreak";
+import ReferralSystem from "./ReferralSystem";
+import UserLevel from "./UserLevel";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
@@ -54,6 +57,13 @@ const Dashboard = () => {
 
       {/* Token Balance Cards */}
       <TokenBalance />
+
+      {/* Engagement Features */}
+      <div className="grid lg:grid-cols-3 gap-6">
+        <DailyStreak />
+        <ReferralSystem />
+        <UserLevel />
+      </div>
 
       {/* Recent Activity */}
       <Card>
