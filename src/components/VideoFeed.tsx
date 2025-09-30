@@ -244,8 +244,8 @@ const VideoFeed = ({ refreshTrigger }: VideoFeedProps) => {
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground">Watch 30s to earn tokens</span>
-                      <span className="text-muted-foreground">0/30s</span>
+                      <span className="text-muted-foreground">Watch 2min to earn tokens</span>
+                      <span className="text-muted-foreground">0/2:00</span>
                     </div>
                     <Progress value={0} className="h-1" />
                   </div>
