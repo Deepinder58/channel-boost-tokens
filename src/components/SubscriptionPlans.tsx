@@ -8,61 +8,73 @@ import { useState } from "react";
 
 const plans = [
   {
-    name: "Free",
-    price: "$0",
-    period: "/month",
+    name: "Basic Pack",
+    price: "$5",
+    period: "",
     description: "Perfect for getting started",
     icon: Star,
     features: [
-      "Earn tokens by watching videos",
+      "500 tokens",
+      "~500 guaranteed views",
       "Basic video promotion",
-      "Standard support",
-      "Community access"
+      "Standard support"
     ],
-    limitations: [
-      "Limited to 50 tokens/day",
-      "Basic analytics"
-    ],
-    buttonText: "Current Plan",
-    popular: false
+    limitations: [],
+    buttonText: "Get Basic Pack",
+    popular: false,
+    isOneTime: true
   },
   {
-    name: "Creator",
-    price: "$19",
-    period: "/month",
-    description: "For serious content creators",
+    name: "Standard Pack",
+    price: "$10", 
+    period: "",
+    description: "Great value with bonus tokens",
     icon: Zap,
     features: [
-      "Everything in Free",
-      "Priority video promotion",
-      "Advanced analytics",
-      "Category targeting",
+      "1,200 tokens",
+      "~1,200 guaranteed views", 
+      "Bonus tokens included",
       "Priority support"
     ],
-    limitations: [
-      "Up to 500 tokens/day"
-    ],
-    buttonText: "Upgrade Now",
-    popular: true
+    limitations: [],
+    buttonText: "Get Standard Pack",
+    popular: true,
+    isOneTime: true
   },
   {
-    name: "Pro",
-    price: "$49",
-    period: "/month",
-    description: "For professional creators",
+    name: "Pro Pack",
+    price: "$25",
+    period: "",
+    description: "For serious creators",
     icon: Crown,
     features: [
-      "Everything in Creator",
-      "Geographic targeting",
-      "Custom audience insights",
-      "Dedicated account manager",
-      "API access"
+      "3,500 tokens",
+      "Biggest bonus included",
+      "Priority promotion",
+      "Advanced analytics"
     ],
-    limitations: [
-      "Unlimited tokens"
+    limitations: [],
+    buttonText: "Get Pro Pack", 
+    popular: false,
+    isOneTime: true
+  },
+  {
+    name: "Monthly Subscription",
+    price: "$15",
+    period: "/month",
+    description: "Recurring tokens with benefits",
+    icon: Crown,
+    features: [
+      "2,000 tokens monthly",
+      "Auto-credited tokens",
+      "Priority promotion",
+      "Premium support",
+      "Advanced analytics"
     ],
-    buttonText: "Go Pro",
-    popular: false
+    limitations: [],
+    buttonText: "Subscribe Now",
+    popular: false,
+    isOneTime: false
   }
 ];
 
@@ -93,7 +105,7 @@ const SubscriptionPlans = () => {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div className="grid md:grid-cols-4 gap-6 max-w-7xl mx-auto">
           {plans.map((plan) => {
             const IconComponent = plan.icon;
             return (
