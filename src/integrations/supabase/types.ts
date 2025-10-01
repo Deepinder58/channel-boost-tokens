@@ -220,7 +220,10 @@ export type Database = {
       video_views: {
         Row: {
           created_at: string
+          device_fingerprint: string | null
           id: string
+          ip_hash: string | null
+          session_id: string | null
           tokens_earned: number
           user_id: string
           video_id: string
@@ -228,7 +231,10 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          device_fingerprint?: string | null
           id?: string
+          ip_hash?: string | null
+          session_id?: string | null
           tokens_earned?: number
           user_id: string
           video_id: string
@@ -236,7 +242,10 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          device_fingerprint?: string | null
           id?: string
+          ip_hash?: string | null
+          session_id?: string | null
           tokens_earned?: number
           user_id?: string
           video_id?: string
@@ -327,6 +336,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_suspicious_view: {
+        Args: { _device_fingerprint: string; _video_id: string }
+        Returns: boolean
+      }
       update_token_balance: {
         Args: {
           _amount: number
@@ -335,6 +348,10 @@ export type Database = {
           _user_id: string
           _video_id?: string
         }
+        Returns: boolean
+      }
+      user_owns_video: {
+        Args: { _user_id: string; _video_id: string }
         Returns: boolean
       }
     }

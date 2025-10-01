@@ -3,9 +3,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Play, Coins, Eye, MessageCircle, Clock } from "lucide-react";
+import { Play, Coins, Eye, MessageCircle, Clock, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { generateDeviceFingerprint, generateSessionId } from "@/lib/deviceFingerprint";
 
 interface VideoFeedProps {
   refreshTrigger?: number;
@@ -38,6 +40,9 @@ const VideoFeed = ({ refreshTrigger }: VideoFeedProps) => {
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("All Categories");
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [deviceFingerprint] = useState(() => generateDeviceFingerprint());
+  const [sessionId] = useState(() => generateSessionId());
 
   const fetchVideos = async () => {
     try {
@@ -104,9 +109,11 @@ const VideoFeed = ({ refreshTrigger }: VideoFeedProps) => {
     fetchVideos();
   }, [refreshTrigger]);
 
-  const filteredVideos = selectedCategory === "All Categories" 
+  // Filter out user's own videos and apply category filter
+  const filteredVideos = (selectedCategory === "All Categories" 
     ? videos 
-    : videos.filter(video => video.category === selectedCategory);
+    : videos.filter(video => video.category === selectedCategory))
+    .filter(video => !user || video.user_id !== user.id);
 
   const extractVideoId = (url: string) => {
     const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
@@ -123,7 +130,62 @@ const VideoFeed = ({ refreshTrigger }: VideoFeedProps) => {
     return num.toString();
   };
 
-  const handleVideoClick = (video: Video) => {
+  const handleVideoClick = async (video: Video) => {
+    if (!user) {
+      toast({
+        title: "Login Required",
+        description: "Please login to watch videos and earn tokens.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Check if user owns the video
+    const { data: ownsVideo } = await supabase.rpc('user_owns_video', {
+      _user_id: user.id,
+      _video_id: video.id
+    });
+
+    if (ownsVideo) {
+      toast({
+        title: "Cannot Earn Tokens",
+        description: "You cannot earn tokens from your own videos.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Check for suspicious activity
+    const { data: isSuspicious } = await supabase.rpc('is_suspicious_view', {
+      _video_id: video.id,
+      _device_fingerprint: deviceFingerprint
+    });
+
+    if (isSuspicious) {
+      toast({
+        title: "Suspicious Activity Detected",
+        description: "Too many views from this device. Please try again later.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Record the view with fingerprint
+    const { error } = await supabase
+      .from('video_views')
+      .insert({
+        user_id: user.id,
+        video_id: video.id,
+        device_fingerprint: deviceFingerprint,
+        session_id: sessionId,
+        watch_duration: 0,
+        tokens_earned: 0
+      });
+
+    if (error && !error.message.includes('duplicate')) {
+      console.error('Error recording view:', error);
+    }
+
     window.open(video.youtube_url, '_blank');
   };
 
@@ -212,11 +274,17 @@ const VideoFeed = ({ refreshTrigger }: VideoFeedProps) => {
                   >
                     <Play className="w-5 h-5 text-white fill-white" />
                   </Button>
-                  {video.category && (
-                    <Badge className="absolute top-2 left-2 bg-gradient-primary text-white border-0">
-                      {video.category}
+                   <div className="absolute top-2 left-2 flex gap-2">
+                    {video.category && (
+                      <Badge className="bg-gradient-primary text-white border-0">
+                        {video.category}
+                      </Badge>
+                    )}
+                    <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm">
+                      <Shield className="w-3 h-3 mr-1" />
+                      Verified
                     </Badge>
-                  )}
+                  </div>
                 </div>
                 
                 <CardContent className="p-4">
