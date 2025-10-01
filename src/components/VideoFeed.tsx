@@ -48,12 +48,19 @@ const VideoFeed = ({ refreshTrigger }: VideoFeedProps) => {
     try {
       setLoading(true);
       
-      // Fetch videos first
-      const { data: videosData, error: videosError } = await supabase
+      // Fetch videos first, excluding user's own videos to prevent self-promotion abuse
+      let query = supabase
         .from('videos')
         .select('*')
         .eq('status', 'approved')
         .order('created_at', { ascending: false });
+      
+      // Filter out user's own videos
+      if (user) {
+        query = query.neq('user_id', user.id);
+      }
+      
+      const { data: videosData, error: videosError } = await query;
 
       if (videosError) throw videosError;
 
@@ -109,11 +116,10 @@ const VideoFeed = ({ refreshTrigger }: VideoFeedProps) => {
     fetchVideos();
   }, [refreshTrigger]);
 
-  // Filter out user's own videos and apply category filter
-  const filteredVideos = (selectedCategory === "All Categories" 
+  // Apply category filter only (user's own videos already filtered in fetch)
+  const filteredVideos = selectedCategory === "All Categories" 
     ? videos 
-    : videos.filter(video => video.category === selectedCategory))
-    .filter(video => !user || video.user_id !== user.id);
+    : videos.filter(video => video.category === selectedCategory);
 
   const extractVideoId = (url: string) => {
     const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;

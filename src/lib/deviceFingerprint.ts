@@ -1,41 +1,33 @@
 // Simple device fingerprinting for fraud detection
-export const generateDeviceFingerprint = (): string => {
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-  let fingerprint = '';
-  
-  if (ctx) {
-    ctx.textBaseline = 'top';
-    ctx.font = '14px Arial';
-    ctx.textBaseline = 'alphabetic';
-    ctx.fillStyle = '#f60';
-    ctx.fillRect(125, 1, 62, 20);
-    ctx.fillStyle = '#069';
-    ctx.fillText('Browser Fingerprint', 2, 15);
-    ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
-    ctx.fillText('Browser Fingerprint', 4, 17);
-    fingerprint = canvas.toDataURL();
-  }
+// Combines browser characteristics to create a semi-unique identifier
 
+export const generateDeviceFingerprint = (): string => {
   const components = [
     navigator.userAgent,
     navigator.language,
     screen.colorDepth,
-    screen.width,
-    screen.height,
+    screen.width + 'x' + screen.height,
     new Date().getTimezoneOffset(),
-    navigator.hardwareConcurrency,
-    fingerprint
+    !!window.sessionStorage,
+    !!window.localStorage,
   ];
 
-  return btoa(components.join('|')).slice(0, 64);
+  // Create a simple hash from the components
+  const fingerprint = components.join('|');
+  return btoa(fingerprint).substring(0, 32);
 };
 
 export const generateSessionId = (): string => {
-  const existingSession = sessionStorage.getItem('video_session_id');
-  if (existingSession) return existingSession;
+  const SESSION_KEY = 'viewer_session_id';
   
-  const newSession = crypto.randomUUID();
-  sessionStorage.setItem('video_session_id', newSession);
-  return newSession;
+  // Try to get existing session ID
+  let sessionId = sessionStorage.getItem(SESSION_KEY);
+  
+  if (!sessionId) {
+    // Generate new session ID
+    sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+    sessionStorage.setItem(SESSION_KEY, sessionId);
+  }
+  
+  return sessionId;
 };
