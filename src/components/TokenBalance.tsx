@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -10,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 const TokenBalance = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<any>(null);
   const [todayEarned, setTodayEarned] = useState(0);
 
@@ -48,24 +50,8 @@ const TokenBalance = () => {
     setTodayEarned(total);
   };
 
-  const handleBuyTokens = async () => {
-    try {
-      const { data, error } = await supabase.functions.invoke('create-payment', {
-        body: { amount: 1000 } // $10 for 100 tokens
-      });
-
-      if (error) throw error;
-
-      if (data?.url) {
-        window.open(data.url, '_blank');
-      }
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
+  const handleBuyTokens = () => {
+    navigate('/buy-tokens');
   };
 
   if (!profile) return null;

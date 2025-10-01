@@ -35,12 +35,12 @@ serve(async (req) => {
     console.log("User authenticated:", user.email);
 
     // Get request body
-    const { amount } = await req.json();
-    if (!amount || typeof amount !== 'number') {
-      throw new Error("Invalid amount provided");
+    const { price_id, pack_name, tokens, recurring } = await req.json();
+    if (!price_id || typeof price_id !== 'string') {
+      throw new Error("Invalid price_id provided");
     }
 
-    console.log("Payment amount:", amount);
+    console.log("Creating payment for:", pack_name, tokens, "tokens", recurring ? "(recurring)" : "");
 
     // Initialize Stripe
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
@@ -60,29 +60,23 @@ serve(async (req) => {
       console.log("No existing customer found");
     }
 
-    // Create a one-time payment session
+    // Create a payment session (one-time or subscription)
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
       line_items: [
         {
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: 'Token Package',
-              description: `${amount / 10} tokens for your account`,
-            },
-            unit_amount: amount, // Amount in cents
-          },
+          price: price_id,
           quantity: 1,
         },
       ],
-      mode: "payment",
+      mode: recurring ? "subscription" : "payment",
       success_url: `${req.headers.get("origin")}/?payment=success`,
       cancel_url: `${req.headers.get("origin")}/?payment=cancelled`,
       metadata: {
         user_id: user.id,
-        token_amount: (amount / 10).toString(), // 100 tokens per $10
+        token_amount: tokens?.toString() || "0",
+        pack_name: pack_name || "Token Pack",
       },
     });
 
