@@ -17,6 +17,7 @@ import VideoEngagementList from "./VideoEngagementList";
 import DailyStreak from "./DailyStreak";
 import ReferralSystem from "./ReferralSystem";
 import UserLevel from "./UserLevel";
+import { VideoUploadModal } from "./VideoUploadModal";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
@@ -24,6 +25,8 @@ import { useEffect, useState } from "react";
 const Dashboard = () => {
   const { user } = useAuth();
   const [displayName, setDisplayName] = useState<string>("");
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -41,6 +44,10 @@ const Dashboard = () => {
     fetchUserProfile();
   }, [user]);
 
+  const handleVideoUploaded = () => {
+    setRefreshKey(prev => prev + 1);
+  };
+
   return (
     <div className="space-y-8">
       {/* Welcome Section */}
@@ -49,7 +56,10 @@ const Dashboard = () => {
           <h1 className="text-3xl font-bold">Welcome back, {displayName}!</h1>
           <p className="text-muted-foreground">Here's your creator dashboard overview</p>
         </div>
-        <Button className="bg-gradient-primary hover:shadow-glow">
+        <Button 
+          className="bg-gradient-primary hover:shadow-glow"
+          onClick={() => setIsUploadModalOpen(true)}
+        >
           <Upload className="w-4 h-4 mr-2" />
           Promote New Video
         </Button>
@@ -99,7 +109,14 @@ const Dashboard = () => {
       </Card>
 
       {/* Video Engagement List */}
-      <VideoEngagementList />
+      <VideoEngagementList key={refreshKey} />
+
+      {/* Video Upload Modal */}
+      <VideoUploadModal 
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        onVideoUploaded={handleVideoUploaded}
+      />
     </div>
   );
 };
