@@ -100,7 +100,7 @@ const Hero = () => {
             <div className="absolute bottom-4 -left-4 bg-white rounded-lg shadow-elegant p-4 animate-pulse-slow">
               <div className="flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-primary" />
-                <span className="font-semibold">+1.2K views</span>
+                <span className="font-semibold">Active Campaign</span>
               </div>
             </div>
           </div>

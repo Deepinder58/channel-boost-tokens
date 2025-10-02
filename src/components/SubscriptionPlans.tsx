@@ -15,8 +15,8 @@ const plans = [
     icon: Star,
     features: [
       "500 tokens",
-      "~500 guaranteed views",
       "Basic video promotion",
+      "Community exposure",
       "Standard support"
     ],
     limitations: [],
@@ -32,7 +32,7 @@ const plans = [
     icon: Zap,
     features: [
       "1,200 tokens",
-      "~1,200 guaranteed views", 
+      "Enhanced visibility",
       "Bonus tokens included",
       "Priority support"
     ],
