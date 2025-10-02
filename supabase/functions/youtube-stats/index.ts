@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,6 +13,11 @@ interface YouTubeVideoStats {
   commentCount: string;
   subscriberCount?: string;
 }
+
+// Input validation schema
+const RequestSchema = z.object({
+  video_id: z.string().uuid("Invalid video ID format")
+});
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -37,10 +43,18 @@ serve(async (req) => {
       throw new Error("User not authenticated");
     }
 
-    const { video_id } = await req.json();
-    if (!video_id) {
-      throw new Error("Video ID is required");
+    const body = await req.json();
+    
+    // Validate input
+    const validation = RequestSchema.safeParse(body);
+    if (!validation.success) {
+      return new Response(
+        JSON.stringify({ error: "Invalid input", details: validation.error.issues }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+      );
     }
+    
+    const { video_id } = validation.data;
 
     console.log("Fetching data for video:", video_id);
 

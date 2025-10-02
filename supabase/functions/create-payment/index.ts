@@ -1,11 +1,20 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Input validation schema
+const PaymentRequestSchema = z.object({
+  price_id: z.string().min(1, "Price ID is required"),
+  pack_name: z.string().min(1).max(100, "Pack name must be between 1-100 characters"),
+  tokens: z.number().int().min(1).max(100000, "Token amount must be between 1-100,000"),
+  recurring: z.boolean().optional()
+});
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -34,11 +43,17 @@ serve(async (req) => {
 
     console.log("User authenticated:", user.email);
 
-    // Get request body
-    const { price_id, pack_name, tokens, recurring } = await req.json();
-    if (!price_id || typeof price_id !== 'string') {
-      throw new Error("Invalid price_id provided");
+    // Get and validate request body
+    const body = await req.json();
+    const validation = PaymentRequestSchema.safeParse(body);
+    if (!validation.success) {
+      return new Response(
+        JSON.stringify({ error: "Invalid input", details: validation.error.issues }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+      );
     }
+    
+    const { price_id, pack_name, tokens, recurring } = validation.data;
 
     console.log("Creating payment for:", pack_name, tokens, "tokens", recurring ? "(recurring)" : "");
 
