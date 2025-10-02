@@ -1,11 +1,9 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Coins, Check, ArrowLeft, Zap, Star, Crown, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 const TOKEN_PACKS = [
@@ -14,7 +12,7 @@ const TOKEN_PACKS = [
     name: "Basic Pack",
     tokens: 500,
     price: 5.00,
-    priceId: "price_1SCx6eCfYIqXLrHfkLCqMlIJ",
+    paymentUrl: "https://buy.stripe.com/test_aFafZg9pF7bXgqBe0TeIw00",
     description: "Perfect for getting started",
     icon: Coins,
     gradient: "from-blue-500 to-cyan-500",
@@ -25,7 +23,7 @@ const TOKEN_PACKS = [
     name: "Standard Pack",
     tokens: 1200,
     price: 10.00,
-    priceId: "price_1SCx7PCfYIqXLrHfrDz3kg95",
+    paymentUrl: "https://buy.stripe.com/test_4gMaEWatJ53PfmxaOHeIw01",
     description: "Great value with bonus tokens",
     icon: Zap,
     gradient: "from-purple-500 to-pink-500",
@@ -37,7 +35,7 @@ const TOKEN_PACKS = [
     name: "Pro Pack",
     tokens: 3000,
     price: 25.00,
-    priceId: "price_1SCx8FCfYIqXLrHfVR8phNWm",
+    paymentUrl: "https://buy.stripe.com/test_5kQ00iatJdAlb6h1e7eIw02",
     description: "For serious creators",
     icon: Crown,
     gradient: "from-orange-500 to-red-500",
@@ -48,7 +46,7 @@ const TOKEN_PACKS = [
     name: "Monthly Subscription",
     tokens: 2000,
     price: 15.00,
-    priceId: "price_1SCxCCCfYIqXLrHf3Cc17R7Y",
+    paymentUrl: "https://buy.stripe.com/test_6oUeVc59p3ZL2zLcWPeIw03",
     description: "Recurring tokens with benefits",
     icon: Star,
     gradient: "from-emerald-500 to-teal-500",
@@ -61,9 +59,8 @@ const BuyTokens = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState<string | null>(null);
 
-  const handlePurchase = async (pack: typeof TOKEN_PACKS[0]) => {
+  const handlePurchase = (pack: typeof TOKEN_PACKS[0]) => {
     if (!user) {
       toast({
         title: "Authentication Required",
@@ -73,36 +70,12 @@ const BuyTokens = () => {
       return;
     }
 
-    setLoading(pack.id);
-    try {
-      const { data, error } = await supabase.functions.invoke('create-payment', {
-        body: { 
-          price_id: pack.priceId,
-          pack_name: pack.name,
-          tokens: pack.tokens,
-          recurring: pack.recurring || false
-        }
-      });
-
-      if (error) throw error;
-
-      if (data?.url) {
-        window.open(data.url, '_blank');
-        toast({
-          title: "Redirecting to Checkout",
-          description: "Opening Stripe checkout in a new tab...",
-        });
-      }
-    } catch (error: any) {
-      console.error('Purchase error:', error);
-      toast({
-        title: "Purchase Failed",
-        description: error.message || "Failed to create payment session",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(null);
-    }
+    // Open Stripe payment link directly
+    window.open(pack.paymentUrl, '_blank');
+    toast({
+      title: "Redirecting to Checkout",
+      description: "Opening Stripe checkout in a new tab...",
+    });
   };
 
   return (
@@ -178,17 +151,10 @@ const BuyTokens = () => {
 
                   <Button
                     onClick={() => handlePurchase(pack)}
-                    disabled={loading === pack.id}
                     className="w-full"
                     variant={pack.popular ? "default" : "outline"}
                   >
-                    {loading === pack.id ? (
-                      "Processing..."
-                    ) : (
-                      <>
-                        {pack.recurring ? "Subscribe Now" : "Buy Now"}
-                      </>
-                    )}
+                    {pack.recurring ? "Subscribe Now" : "Buy Now"}
                   </Button>
                 </CardContent>
               </Card>
