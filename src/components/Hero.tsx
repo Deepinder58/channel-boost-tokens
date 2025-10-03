@@ -39,20 +39,15 @@ const Hero = () => {
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Button 
-                size="lg" 
-                className="bg-gradient-primary hover:shadow-glow transition-all duration-300"
-                onClick={handleStartPromoting}
-              >
-                <Play className="w-5 h-5 mr-2 fill-white" />
-                Start Promoting
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-              <Button variant="outline" size="lg">
-                Watch Demo
-              </Button>
-            </div>
+            <Button 
+              size="lg" 
+              className="bg-gradient-primary hover:shadow-glow transition-all duration-300"
+              onClick={handleStartPromoting}
+            >
+              <Play className="w-5 h-5 mr-2 fill-white" />
+              Start Promoting
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
 
             <div className="grid grid-cols-3 gap-6 pt-8">
               <div className="text-center">
