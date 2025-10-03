@@ -10,6 +10,7 @@ import { VideoUploadModal } from "@/components/VideoUploadModal";
 import { useAuth } from "@/hooks/useAuth";
 import { AuthProvider } from "@/hooks/useAuth";
 import { FeatureGrid, type Feature } from "@/components/ui/feature-grid";
+import LoaderGrid from "@/components/ui/loader-grid";
 
 // Platform features data
 const platformFeatures: Feature[] = [
