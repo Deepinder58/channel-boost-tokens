@@ -79,6 +79,10 @@ const Hero = () => {
               <img 
                 src={heroImage} 
                 alt="YouTube creators collaborating and growing together"
+                width="1280"
+                height="720"
+                loading="eager"
+                fetchPriority="high"
                 className="w-full h-auto animate-float"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
