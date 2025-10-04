@@ -63,7 +63,7 @@ const Navigation = ({ onTabChange, activeTab }: NavigationProps) => {
                 <div className="w-8 h-8 rounded-lg bg-gradient-primary flex items-center justify-center">
                   <Play className="w-4 h-4 text-white fill-white" />
                 </div>
-                <span className="font-bold text-xl">CreatorBoost</span>
+                <span className="font-bold text-xl">VidRise</span>
               </div>
               
               {user && (
