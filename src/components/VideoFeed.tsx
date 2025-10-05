@@ -210,49 +210,58 @@ const VideoFeed = ({ refreshTrigger }: VideoFeedProps) => {
 
     toast({
       title: "Video Started",
-      description: "Watch for 2 minutes to earn tokens!",
+      description: "Watch for 30 seconds to earn tokens!",
     });
 
-    // Check if user returns after 2 minutes
+    // Check progress and award after 30 seconds
+    let awarded = false;
     const checkInterval = setInterval(async () => {
-      if (newWindow.closed) {
-        clearInterval(checkInterval);
-        const watchDuration = Math.floor((Date.now() - startTime) / 1000);
+      const watchDuration = Math.floor((Date.now() - startTime) / 1000);
+
+      // Award once when threshold reached, even if tab is still open
+      if (!awarded && watchDuration >= 30) {
+        const tokensToEarn = Math.ceil(video.tokens_spent * 0.1);
         
-        if (watchDuration >= 120) { // 2 minutes
-          const tokensToEarn = Math.ceil(video.tokens_spent * 0.1);
-          
-          // Award tokens
-          const { error: updateError } = await supabase.rpc('update_token_balance', {
-            _user_id: user.id,
-            _amount: tokensToEarn,
-            _type: 'earned',
-            _description: `Watched video: ${video.title}`,
-            _video_id: video.id
+        // Award tokens
+        const { error: updateError } = await supabase.rpc('update_token_balance', {
+          _user_id: user.id,
+          _amount: tokensToEarn,
+          _type: 'earned',
+          _description: `Watched video: ${video.title}`,
+          _video_id: video.id
+        });
+
+        if (!updateError) {
+          // Update the view record
+          await supabase
+            .from('video_views')
+            .upsert({
+              user_id: user.id,
+              video_id: video.id,
+              device_fingerprint: deviceFingerprint,
+              session_id: sessionId,
+              watch_duration: watchDuration,
+              tokens_earned: tokensToEarn
+            });
+
+          toast({
+            title: "Tokens Earned!",
+            description: `You earned ${tokensToEarn} tokens for watching!`,
           });
 
-          if (!updateError) {
-            // Update the view record
-            await supabase
-              .from('video_views')
-              .upsert({
-                user_id: user.id,
-                video_id: video.id,
-                device_fingerprint: deviceFingerprint,
-                session_id: sessionId,
-                watch_duration: watchDuration,
-                tokens_earned: tokensToEarn
-              });
+          awarded = true;
+          clearInterval(checkInterval);
+          return;
+        }
+      }
 
-            toast({
-              title: "Tokens Earned!",
-              description: `You earned ${tokensToEarn} tokens for watching!`,
-            });
-          }
-        } else {
+      // If user closes the tab before threshold, show incomplete
+      if (newWindow.closed) {
+        clearInterval(checkInterval);
+        if (!awarded && watchDuration < 30) {
           toast({
             title: "Watch Incomplete",
-            description: "You need to watch for at least 2 minutes to earn tokens.",
+            description: "You need to watch for at least 30 seconds to earn tokens.",
             variant: "destructive"
           });
         }
@@ -388,8 +397,8 @@ const VideoFeed = ({ refreshTrigger }: VideoFeedProps) => {
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground">Watch 2min to earn tokens</span>
-                      <span className="text-muted-foreground">0/2:00</span>
+                      <span className="text-muted-foreground">Watch 30s to earn tokens</span>
+                      <span className="text-muted-foreground">0/0:30</span>
                     </div>
                     <Progress value={0} className="h-1" />
                   </div>
