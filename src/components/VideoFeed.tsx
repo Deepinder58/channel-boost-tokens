@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Play, Coins, Eye, MessageCircle, Clock, Shield } from "lucide-react";
+import { Play, Coins, Eye, MessageCircle, Clock, Shield, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -39,6 +39,7 @@ const VideoFeed = ({ refreshTrigger }: VideoFeedProps) => {
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("All Categories");
+  const [completedVideos, setCompletedVideos] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const { user } = useAuth();
   const [deviceFingerprint] = useState(() => generateDeviceFingerprint());
@@ -100,6 +101,19 @@ const VideoFeed = ({ refreshTrigger }: VideoFeedProps) => {
         new Set(videosData.map(video => video.category).filter(Boolean))
       ) as string[];
       setCategories(uniqueCategories);
+
+      // Fetch completed videos for current user
+      if (user) {
+        const { data: completedViewsData } = await supabase
+          .from('video_views')
+          .select('video_id')
+          .eq('user_id', user.id)
+          .gt('tokens_earned', 0);
+        
+        if (completedViewsData) {
+          setCompletedVideos(new Set(completedViewsData.map(v => v.video_id)));
+        }
+      }
     } catch (error: any) {
       console.error('VideoFeed fetch error:', error);
       toast({
@@ -249,6 +263,9 @@ const VideoFeed = ({ refreshTrigger }: VideoFeedProps) => {
             description: `You earned ${tokensToEarn} tokens for watching!`,
           });
 
+          // Mark video as completed
+          setCompletedVideos(prev => new Set([...prev, video.id]));
+
           awarded = true;
           clearInterval(checkInterval);
           return;
@@ -336,11 +353,12 @@ const VideoFeed = ({ refreshTrigger }: VideoFeedProps) => {
             const thumbnailUrl = video.thumbnail_url || 
               (videoId ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` : 
                'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=400&h=225&fit=crop');
+            const isCompleted = completedVideos.has(video.id);
             
             return (
               <Card 
                 key={video.id} 
-                className="group hover:shadow-elegant transition-all duration-300 cursor-pointer"
+                className={`group hover:shadow-elegant transition-all duration-300 cursor-pointer ${isCompleted ? 'ring-2 ring-success' : ''}`}
                 onClick={() => handleVideoClick(video)}
               >
                 <div className="relative">
@@ -370,6 +388,14 @@ const VideoFeed = ({ refreshTrigger }: VideoFeedProps) => {
                       Verified
                     </Badge>
                   </div>
+                  {isCompleted && (
+                    <div className="absolute top-2 right-2">
+                      <Badge className="bg-success text-white border-0 flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3" />
+                        Completed
+                      </Badge>
+                    </div>
+                  )}
                 </div>
                 
                 <CardContent className="p-4">
