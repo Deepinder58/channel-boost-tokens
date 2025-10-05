@@ -176,23 +176,93 @@ const VideoFeed = ({ refreshTrigger }: VideoFeedProps) => {
       return;
     }
 
-    // Record the view with fingerprint
-    const { error } = await supabase
+    // Record the initial view
+    const { data: existingView } = await supabase
       .from('video_views')
-      .insert({
-        user_id: user.id,
-        video_id: video.id,
-        device_fingerprint: deviceFingerprint,
-        session_id: sessionId,
-        watch_duration: 0,
-        tokens_earned: 0
-      });
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('video_id', video.id)
+      .eq('device_fingerprint', deviceFingerprint)
+      .single();
 
-    if (error && !error.message.includes('duplicate')) {
-      console.error('Error recording view:', error);
+    if (existingView && existingView.tokens_earned > 0) {
+      toast({
+        title: "Already Earned",
+        description: "You've already earned tokens from this video.",
+        variant: "destructive"
+      });
+      return;
     }
 
-    window.open(video.youtube_url, '_blank');
+    const startTime = Date.now();
+
+    // Open video in new tab
+    const newWindow = window.open(video.youtube_url, '_blank');
+    
+    if (!newWindow) {
+      toast({
+        title: "Popup Blocked",
+        description: "Please allow popups to watch videos and earn tokens.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    toast({
+      title: "Video Started",
+      description: "Watch for 2 minutes to earn tokens!",
+    });
+
+    // Check if user returns after 2 minutes
+    const checkInterval = setInterval(async () => {
+      if (newWindow.closed) {
+        clearInterval(checkInterval);
+        const watchDuration = Math.floor((Date.now() - startTime) / 1000);
+        
+        if (watchDuration >= 120) { // 2 minutes
+          const tokensToEarn = Math.ceil(video.tokens_spent * 0.1);
+          
+          // Award tokens
+          const { error: updateError } = await supabase.rpc('update_token_balance', {
+            _user_id: user.id,
+            _amount: tokensToEarn,
+            _type: 'earned',
+            _description: `Watched video: ${video.title}`,
+            _video_id: video.id
+          });
+
+          if (!updateError) {
+            // Update the view record
+            await supabase
+              .from('video_views')
+              .upsert({
+                user_id: user.id,
+                video_id: video.id,
+                device_fingerprint: deviceFingerprint,
+                session_id: sessionId,
+                watch_duration: watchDuration,
+                tokens_earned: tokensToEarn
+              });
+
+            toast({
+              title: "Tokens Earned!",
+              description: `You earned ${tokensToEarn} tokens for watching!`,
+            });
+          }
+        } else {
+          toast({
+            title: "Watch Incomplete",
+            description: "You need to watch for at least 2 minutes to earn tokens.",
+            variant: "destructive"
+          });
+        }
+      }
+    }, 1000);
+
+    // Clean up after 10 minutes max
+    setTimeout(() => {
+      clearInterval(checkInterval);
+    }, 600000);
   };
 
   if (loading) {
