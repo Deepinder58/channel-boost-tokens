@@ -49,19 +49,12 @@ const VideoFeed = ({ refreshTrigger }: VideoFeedProps) => {
     try {
       setLoading(true);
       
-      // Fetch videos first, excluding user's own videos to prevent self-promotion abuse
-      let query = supabase
+      // Fetch all approved videos (fraud prevention handled by checks in handleVideoClick)
+      const { data: videosData, error: videosError } = await supabase
         .from('videos')
         .select('*')
         .eq('status', 'approved')
         .order('created_at', { ascending: false });
-      
-      // Filter out user's own videos
-      if (user) {
-        query = query.neq('user_id', user.id);
-      }
-      
-      const { data: videosData, error: videosError } = await query;
 
       if (videosError) throw videosError;
 
