@@ -258,13 +258,24 @@ const VideoFeed = ({ refreshTrigger }: VideoFeedProps) => {
               tokens_earned: tokensToEarn
             });
 
+          // Increment total_views in videos table
+          await supabase
+            .from('videos')
+            .update({ total_views: video.total_views + 1 })
+            .eq('id', video.id);
+
           toast({
             title: "Tokens Earned!",
             description: `You earned ${tokensToEarn} tokens for watching!`,
           });
 
-          // Mark video as completed
+          // Mark video as completed and update local state
           setCompletedVideos(prev => new Set([...prev, video.id]));
+          
+          // Update the video in the local state to reflect new view count
+          setVideos(prev => prev.map(v => 
+            v.id === video.id ? { ...v, total_views: v.total_views + 1 } : v
+          ));
 
           awarded = true;
           clearInterval(checkInterval);
