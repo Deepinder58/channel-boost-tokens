@@ -40,6 +40,7 @@ const VideoFeed = ({ refreshTrigger }: VideoFeedProps) => {
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("All Categories");
   const [completedVideos, setCompletedVideos] = useState<Set<string>>(new Set());
+  const [youtubeStats, setYoutubeStats] = useState<Record<string, any>>({});
   const { toast } = useToast();
   const { user } = useAuth();
   const [deviceFingerprint] = useState(() => generateDeviceFingerprint());
@@ -94,6 +95,33 @@ const VideoFeed = ({ refreshTrigger }: VideoFeedProps) => {
         new Set(videosData.map(video => video.category).filter(Boolean))
       ) as string[];
       setCategories(uniqueCategories);
+
+      // Fetch YouTube stats for all videos
+      const statsPromises = videosWithProfiles.map(async (video) => {
+        const videoId = extractVideoId(video.youtube_url);
+        if (videoId) {
+          try {
+            const { data, error } = await supabase.functions.invoke('youtube-stats', {
+              body: { videoId }
+            });
+            if (!error && data) {
+              return { videoId: video.id, stats: data };
+            }
+          } catch (err) {
+            console.error('Failed to fetch YouTube stats:', err);
+          }
+        }
+        return null;
+      });
+
+      const statsResults = await Promise.all(statsPromises);
+      const statsMap: Record<string, any> = {};
+      statsResults.forEach(result => {
+        if (result) {
+          statsMap[result.videoId] = result.stats;
+        }
+      });
+      setYoutubeStats(statsMap);
 
       // Fetch completed videos for current user
       if (user) {
@@ -408,15 +436,19 @@ const VideoFeed = ({ refreshTrigger }: VideoFeedProps) => {
                     by {video.profiles?.display_name || video.profiles?.username || 'Anonymous'}
                   </p>
                   
-                    <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <Eye className="w-4 h-4" />
-                          {formatNumber(video.total_views)}
+                          {youtubeStats[video.id]?.viewCount 
+                            ? formatNumber(parseInt(youtubeStats[video.id].viewCount))
+                            : formatNumber(video.total_views)}
                         </div>
                         <div className="flex items-center gap-1">
                           <MessageCircle className="w-4 h-4" />
-                          {Math.floor(Math.random() * 50) + 10}
+                          {youtubeStats[video.id]?.commentCount 
+                            ? formatNumber(parseInt(youtubeStats[video.id].commentCount))
+                            : '0'}
                         </div>
                       </div>
                     <div className="flex items-center gap-1 bg-success/10 px-2 py-1 rounded-full">
